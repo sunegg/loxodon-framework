@@ -620,15 +620,7 @@ ObservableObject、ObservableList、ObservableDictionary，在MVVM框架的数�
     BindingServiceBundle bindingService = new BindingServiceBundle(context.GetContainer());
     bindingService.Start();
 ```
-如果安装了Lua插件，使用Lua编写游戏时，数据绑定服务初始化如下，LuaBindingServiceBundle中增加了有关对Lua对象支持的组件。
-```csharp
-    //获得全局上下文
-    ApplicationContext context = Context.GetApplicationContext();
 
-    //初始化数据绑定服务
-    LuaBindingServiceBundle bundle = new LuaBindingServiceBundle(context.GetContainer());
-    bundle.Start();
-```
 #### 数据绑定示例
 ```csharp
     //创建一个数据绑定集合，泛型参数DatabindingExample是视图，AccountViewModel是视图模型
@@ -704,10 +696,6 @@ ObservableObject、ObservableList、ObservableDictionary，在MVVM框架的数�
 
       //C#，非拉姆达表达式的方式
       bindingSet.Bind (this.username).For ("text").To ("Account.Username").OneWay ();
-
-      --Lua，非拉姆达表达式参数的版本
-      bindingSet:Bind(self.username):For("text"):To("account.username"):OneWay()
-      bindingSet:Bind(self.errorMessage):For("text"):To("errors['errorMessage']"):OneWay()
 ```
 - **表达式绑定**
 
@@ -715,12 +703,6 @@ ObservableObject、ObservableList、ObservableDictionary，在MVVM框架的数�
 ```csharp
       //C#代码，使用拉姆达表达式为参数的ToExpression方法，自动分析监听视图模型的Price属性
       bindingSet.Bind(this.price).For(v => v.text).ToExpression(vm => string.Format("${0:0.00}", vm.Price)).OneWay();
-
-      --Lua代码，使用string参数版本的ToExpression方法，需要手动配置price属性,如果表达式使用了vm的多个属性，
-      --则在"price"后继续配置其他属性
-      bindingSet:Bind(self.price):For("text"):ToExpression(function(vm)
-          return string.format(tostring("%0.2f"), vm.price)
-      end ,"price"):OneWay()
 ```
 - **方法绑定**
 
@@ -731,9 +713,6 @@ ObservableObject、ObservableList、ObservableDictionary，在MVVM框架的数�
 
       //C#，拉姆达表达式方式的绑定，如果方法带参数，请在To后面加上泛型约束
       bindingSet.Bind(this.emailEdit).For(v => v.onValueChanged).To<string>(vm => vm.OnEmailValueChanged);
-
-      --Lua，通过字符串参数绑定，Button.onClick 与视图模型的成员submit方法绑定
-      bindingSet:Bind(self.submit):For("onClick"):To("submit"):OneWay()
 ```
 
 - **命令和交互请求绑定**
@@ -983,12 +962,6 @@ ObservableObject、ObservableList、ObservableDictionary，在MVVM框架的数�
     Color color = this.variables.Get<Color>("color");
     InputField usernameInput = this.variables.Get<InputField>("username");
     InputField emailInput = this.variables.Get<InputField>("email");
-
-    --Lua，可以直接通过self来访问变量，跟当前Lua表中的成员属性一样
-    printf("vector:%s",self.vector:ToString())
-    printf("color:%s",self.color:ToString())
-    printf("username:%s",self.username.text)
-    printf("email:%s",self.email.text)
 ```
 
 #### UI视图定位器(IUIViewLocator)
@@ -1062,25 +1035,6 @@ UI视图定位器是一个查询和加载UI视图的服务，它提供了同步�
         }
     }
 ```
-使用DoTween自定义一个Lua的动画
-
-![](images/Animations_Alpha_Lua.png)
-
-    require("framework.System")
-
-    ---
-    --模块
-    --@module AlphaAnimation
-    local M=class("AlphaAnimation",target)
-
-    function M:play(view,startCallback,endCallback)
-        view.CanvasGroup:DOFade(self.to, self.duration)
-            :OnStart(function() startCallback() end)
-            :OnComplete(function() endCallback() end)
-            :Play()    
-    end
-
-    return M
 
 #### UI控件
 
@@ -1153,34 +1107,6 @@ UGUI虽然为我们提供了丰富的UI控件库，但是在某些时候，仍�
           }
       }
 ```
-      --Lua,创建窗口
-      require("framework.System")
-
-      local ExampleViewModel = require("LuaUI.Startup.ExampleViewModel")
-
-      ---
-      --模块
-      --@module ExampleWindow
-      local M=class("ExampleWindow",target)
-
-      function M:onCreate(bundle)
-          self.viewModel = ExampleViewModel()
-
-          self:BindingContext().DataContext = self.viewModel
-
-          local bindingSet = self:CreateBindingSet()
-
-          bindingSet:Bind(self.progressBarSlider):For("value", "onValueChanged"):To("progressBar.progress"):TwoWay()
-          bindingSet:Bind(self.progressBarSlider.gameObject):For("activeSelf"):To("progressBar.enable"):OneWay()
-          bindingSet:Bind(self.progressBarText):For("text"):ToExpression(
-              function(vm) return string.format("%0.2f%%",vm.progressBar.progress * 100) end,
-          "progressBar.progress"):OneWay()
-          bindingSet:Bind(self.tipText):For("text"):To("progressBar.tip"):OneWay()
-          bindingSet:Bind(self.button):For("onClick"):To("command"):OneWay()
-          bindingSet:Build()
-      end
-
-      return M
 
 - **窗口容器和窗口管理器(WindowContainer、IWindowManager)**
 
